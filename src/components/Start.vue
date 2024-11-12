@@ -52,23 +52,46 @@
           <!-- Free Text Questions -->
           <div v-if="currentQuestion.freeText">
             <!-- Single input for Q2 -->
-            <div
-              v-if="currentQuestion.id === 'Q2'"
-              class="train-input-container"
-            >
-              <input
-                v-model="freeTextAnswer"
-                class="form-control train-input"
-                type="text"
-                :placeholder="'Votre réponse'"
-              />
-              <button
-                @click="handleFreeTextAnswer"
-                class="btn-next train-button"
-                :disabled="!freeTextAnswer.trim()"
+            <!-- Modified question handling -->
+            <div v-if="currentQuestion.id === 'Q2'">
+              <!-- Show list of trains if available for the selected axis -->
+              <div
+                v-if="
+                  currentQuestionOptions && currentQuestionOptions.length > 0
+                "
               >
-                Suivant
-              </button>
+                <ul class="train-list">
+                  <li
+                    v-for="(option, index) in currentQuestionOptions"
+                    :key="index"
+                  >
+                    <button
+                      v-if="!option.hidden"
+                      @click="selectAnswer(option)"
+                      class="btn-option"
+                    >
+                      {{ option.text }}
+                    </button>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Show free text input if no trains available -->
+              <div v-else class="train-input-container">
+                <input
+                  v-model="freeTextAnswer"
+                  class="form-control"
+                  type="text"
+                  placeholder="Numéro de train"
+                />
+                <button
+                  @click="handleFreeTextAnswer"
+                  class="btn-next"
+                  :disabled="!freeTextAnswer.trim()"
+                >
+                  Suivant
+                </button>
+              </div>
             </div>
 
             <div
@@ -629,5 +652,33 @@ h2 {
   padding: 12px;
   font-size: 16px;
   margin-top: 8px;
+}
+
+.train-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  max-width: 600px;
+}
+
+.btn-option {
+  background-color: #4a5a83;
+  text-align: left;
+  width: 100%;
+  max-width: 400px;
+  color: white;
+  padding: 15px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.train-input-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
 }
 </style>
