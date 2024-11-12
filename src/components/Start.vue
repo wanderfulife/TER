@@ -72,22 +72,14 @@
             </div>
 
             <!-- Multiple inputs for Q4-Q8 -->
-            <div
-              v-else-if="currentQuestion.id === 'Q4'"
-              class="mobile-questions-container"
-            >
-              <div
-                v-for="q in ['Q4', 'Q5', 'Q6', 'Q7', 'Q8']"
-                :key="q"
-                class="mobile-input-group"
-              >
-                <h2>{{ getQuestionText(q) }}</h2>
+            <div v-else-if="currentQuestion.id === 'Q4'" class="mobile-questions-container">
+              <div v-for="q in ['Q4', 'Q5', 'Q6', 'Q7', 'Q8']" :key="q" class="mobile-input-group">
+                <h2 v-if="q !== 'Q4'">{{ getQuestionText(q) }}</h2>
                 <input
                   v-model="multiAnswers[q]"
                   class="mobile-input"
                   type="number"
                   min="0"
-                  :placeholder="'Votre réponse'"
                 />
               </div>
               <button @click="handleMultiAnswers" class="mobile-btn-next">
@@ -99,10 +91,6 @@
             </div>
           </div>
 
-          <!-- Back Button -->
-          <button @click="previousQuestion" class="btn-return" v-if="canGoBack">
-            Retour
-          </button>
         </div>
       </div>
 
@@ -429,7 +417,6 @@ const getNextId = async () => {
 };
 </script>
 
-
 <style>
 /* Base styles */
 body {
@@ -447,22 +434,9 @@ body {
   color: white;
 }
 
-/* Center the Start Survey button horizontally and vertically */
-.start-survey-container {
-  justify-content: center;
-  /* Center horizontally */
-  align-items: center;
-  /* Center vertically */
-  height: 50vh;
-  /* Full viewport height */
-  width: 100%;
-  /* Full width */
-  margin-bottom: 5%;
-}
-
+/* Content area */
 .content-container {
   flex-grow: 1;
-  /* This allows the content to take up available space */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -472,20 +446,19 @@ body {
   margin: 0 auto;
   box-sizing: border-box;
   overflow-y: auto;
-  /* Allow scrolling if content overflows */
+}
+
+.start-survey-container {
+  justify-content: center;
+  align-items: center;
+  height: 50vh;
+  width: 100%;
+  margin-bottom: 5%;
 }
 
 .question-container {
   width: 100%;
   margin-bottom: 30px;
-}
-
-.input-container {
-  display: flex;
-  justify-content: center;
-  /* Center horizontally */
-  width: 100%;
-  /* Take full width of the parent */
 }
 
 h2 {
@@ -496,7 +469,6 @@ h2 {
 .form-control {
   width: 100%;
   max-width: 400px;
-  /* Maximum width of the input */
   padding: 10px;
   border-radius: 5px;
   border: 1px solid white;
@@ -550,27 +522,6 @@ h2 {
   width: 100%;
   box-sizing: border-box;
   position: relative;
-  /* Keep the footer relative to its parent */
-}
-
-.btn-download {
-  background-color: #ffffff;
-  color: #4c4faf;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
-  padding: 10px 20px;
-  border-radius: 25px;
-  transition: all 0.3s ease;
-  margin-bottom: 15px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.doc-count {
-  font-size: 14px;
-  opacity: 0.9;
 }
 
 .progress-bar {
@@ -588,21 +539,6 @@ h2 {
   transition: width 0.3s ease-in-out;
 }
 
-.commune-dropdown {
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-}
-
-.commune-option {
-  padding: 5px;
-  cursor: pointer;
-}
-
-.commune-option:hover {
-  background-color: #f0f0f0;
-}
-
 @media screen and (max-width: 768px) {
   .question-container {
     margin-bottom: 20px;
@@ -617,218 +553,66 @@ h2 {
   }
 }
 
-/* Ensure responsive centering */
 @media screen and (max-width: 480px) {
   .form-control {
     max-width: 100%;
-    /* Ensure full width on small screens */
   }
 }
-.btn-pdf {
-  background-color: #ff9800;
-  /* Orange color to make it distinct */
-  color: white;
-  padding: 15px;
-  margin: 10px 0;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  transition: background-color 0.3s;
-}
 
-.btn-pdf:hover {
-  background-color: #f57c00;
-  /* Darker orange on hover */
-}
-
-.modal {
-  display: flex;
-  position: fixed;
-  z-index: 1;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0, 0, 0, 0.4);
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background-color: #fefefe;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 90%;
-  max-width: 800px;
-  position: relative;
-}
-
-.pdf-content {
-  height: 80vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-  cursor: pointer;
-  position: absolute;
-  right: 10px;
-  top: 5px;
-}
-
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-/* Ensure the PDF fits within the modal */
-.pdf-content iframe {
-  flex-grow: 1;
-  border: none;
-  margin-top: 20px;
-}
-
-/* Add these new styles */
-.precision-input {
-  margin-top: 15px;
-}
-
-.precision-input h3 {
-  font-size: 1.1em;
-  margin-bottom: 10px;
-}
-
-/* Add to your existing styles */
-.multi-question-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.question-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.question-group h3 {
-  margin: 0;
-  font-size: 1.1em;
-}
-/* Update styles to match your screenshot */
-.multi-question-container {
-  width: 90%;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.questions-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-  margin-bottom: 30px;
-}
-
-.question-item {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 15px;
-  padding: 20px;
-}
-
-.question-item h2 {
-  color: white;
-  margin-bottom: 20px;
-  text-align: center;
-  font-size: 1.5rem;
-}
-
-.form-control {
-  width: 100%;
-  height: 50px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-size: 18px;
-  text-align: center;
-  padding: 10px;
-}
-
-.form-control::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.btn-next {
-  width: 200px;
-  display: block;
-  margin: 30px auto 0;
-}
 .mobile-questions-container {
-  width: 100%;
-  padding: 0 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  align-items: center;
+  width: 100%;
+  gap: 24px;
+  padding: 0 20px;
 }
 
 .mobile-input-group {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 10px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 .mobile-input-group h2 {
   color: white;
   font-size: 20px;
-  text-align: center;
-  margin-bottom: 10px;
+  margin: 0;
 }
 
 .mobile-input {
   width: 100%;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 8px;
+  height: 44px;
+  background-color: #333;
   color: white;
+  border: none;
+  border-radius: 4px;
   font-size: 16px;
+  padding: 0 12px;
   text-align: center;
-  padding: 8px;
 }
 
 .mobile-btn-next {
+  width: 100%;
   background: green;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 12px;
   font-size: 16px;
-  margin: 10px 0;
-  width: 100%;
+  margin-top: 24px;
 }
 
 .mobile-btn-return {
+  width: 100%;
   background: #666;
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 12px;
   font-size: 16px;
-  width: 100%;
+  margin-top: 8px;
 }
 </style>
