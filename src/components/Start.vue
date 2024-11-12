@@ -139,13 +139,15 @@
         </div>
       </div>
 
-      <!-- Survey Complete Step -->
       <div v-else-if="isSurveyComplete" class="survey-complete">
-        <h2>Merci pour votre réponse et bonne journée.</h2>
-        <button @click="resetSurvey" class="btn-next">
-          Nouveau questionnaire
-        </button>
-      </div>
+    <h2>Merci pour votre réponse et bonne journée.</h2>
+    <button @click="resetSurvey" class="btn-next">
+      Nouveau questionnaire
+    </button>
+    <button @click="refreshPage" class="btn-next" style="background-color: #dc3545; margin-top: 10px;">
+      Nouvel enqueteur/axe/numero de train
+    </button>
+  </div>
 
       <!-- Logo -->
       <img class="logo" src="../assets/Alycelogo.webp" alt="Logo Alyce" />
@@ -273,16 +275,28 @@ const progress = computed(() => {
     : Math.min(Math.round((currentQuestionNumber / totalQuestions) * 100), 99);
 });
 
+// Modified setEnqueteur function
 const setEnqueteur = () => {
   if (enqueteur.value.trim() !== "") {
-    currentStep.value = persistentQ1.value ? "start" : "survey";
-    currentQuestionIndex.value =
-      persistentQ1.value && persistentQ2.value ? 2 : 0;
+    // If both Q1 and Q2 are persistent, start at Q3
+    if (persistentQ1.value && persistentQ2.value) {
+      currentStep.value = "survey";
+      currentQuestionIndex.value = 2; // Index for Q3
+      // Initialize answers with persistent values
+      answers.value = {
+        Q1: persistentQ1.value,
+        Q2: persistentQ2.value
+      };
+    } else {
+      // Otherwise start at Q1 or wherever appropriate
+      currentStep.value = persistentQ1.value ? "start" : "survey";
+      currentQuestionIndex.value = persistentQ1.value ? 1 : 0;
+    }
     isEnqueteurSaved.value = true;
   }
 };
 
-// Update startSurvey in Start.vue
+// Modified startSurvey function
 const startSurvey = () => {
   startDate.value = new Date().toLocaleTimeString("fr-FR", {
     hour: "2-digit",
@@ -290,8 +304,12 @@ const startSurvey = () => {
     second: "2-digit",
   });
   currentStep.value = "survey";
-  // Change this line to check for persistentQ2
+  // If both Q1 and Q2 are persistent, start at Q3
   currentQuestionIndex.value = persistentQ1.value && persistentQ2.value ? 2 : 1;
+  answers.value = {
+    Q1: persistentQ1.value,
+    Q2: persistentQ2.value
+  };
   isSurveyComplete.value = false;
 };
 
@@ -306,20 +324,26 @@ const selectAnswer = (option) => {
     if (currentQuestion.value.id === "Q1") {
       persistentQ1.value = option.id;
       currentStep.value = "start";
-    } else if (option.next === "end") {
+    } else if (currentQuestion.value.id === "Q2") {
+      persistentQ2.value = option.id; // Store Q2 answer persistently
+    }
+    
+    if (option.next === "end") {
       finishSurvey();
     } else {
       nextQuestion(option.next);
     }
   }
 };
+const refreshPage = () => {
+  location.reload();
+};
 
-// Update handleFreeTextAnswer in Start.vue
 const handleFreeTextAnswer = () => {
   if (currentQuestion.value) {
     answers.value[currentQuestion.value.id] = freeTextAnswer.value;
     if (currentQuestion.value.id === "Q2") {
-      persistentQ2.value = freeTextAnswer.value;
+      persistentQ2.value = freeTextAnswer.value; // Store free text Q2 answer persistently
     }
     if (currentQuestion.value.next === "end") {
       finishSurvey();
@@ -414,12 +438,13 @@ const finishSurvey = async () => {
 
 // Update resetSurvey function
 const resetSurvey = () => {
-  isSurveyComplete.value = false; // First set this to false
+  isSurveyComplete.value = false;
   currentStep.value = "start";
   startDate.value = "";
+  // Initialize answers with persistent values
   answers.value = {
     Q1: persistentQ1.value,
-    Q2: persistentQ2.value,
+    Q2: persistentQ2.value
   };
   // Reset multiAnswers
   multiAnswers.value = {
@@ -429,7 +454,8 @@ const resetSurvey = () => {
     Q7: "",
     Q8: "",
   };
-  currentQuestionIndex.value = 2;
+  // Start at Q3 if we have both persistent values
+  currentQuestionIndex.value = persistentQ1.value && persistentQ2.value ? 2 : 1;
 };
 
 const getDocCount = async () => {
