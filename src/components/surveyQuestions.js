@@ -1,7 +1,7 @@
 export const questions = [
 	{
 		id: "Q1",
-		text: "Poste",
+		text: "Axe",
 		options: [
 			{ id: 1, text: "Brest - Landerneau - Morlaix", next: "Q2" },
 			{ id: 2, text: "Brest - Quimper", next: "Q2" },
@@ -24,7 +24,13 @@ export const questions = [
 	},
 	{
 		id: "Q2",
-		text: (answers) => "Sur quelle gare de cet axe voyagez-vous ?",
+		text: "Numéro de train",
+		freeText: true,
+		next: "Q3",
+	},
+	{
+		id: "Q3",
+		text: (answers) => "Gare d'arrêt",
 		options: (answers) => {
 			switch (answers.Q1) {
 				case 1: // Brest - Landerneau - Morlaix
