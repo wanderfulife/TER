@@ -71,15 +71,24 @@
               </button>
             </div>
 
-            <!-- Multiple inputs for Q4-Q8 -->
-            <div v-else-if="currentQuestion.id === 'Q4'" class="mobile-questions-container">
-              <div v-for="q in ['Q4', 'Q5', 'Q6', 'Q7', 'Q8']" :key="q" class="mobile-input-group">
+            <div
+              v-else-if="currentQuestion.id === 'Q4'"
+              class="mobile-questions-container"
+            >
+              <div
+                v-for="q in ['Q4', 'Q5', 'Q6', 'Q7', 'Q8']"
+                :key="q"
+                class="mobile-input-group"
+              >
                 <h2 v-if="q !== 'Q4'">{{ getQuestionText(q) }}</h2>
                 <input
                   v-model="multiAnswers[q]"
                   class="mobile-input"
                   type="number"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
                   min="0"
+                  @input="validateInput($event, q)"
                 />
               </div>
               <button @click="handleMultiAnswers" class="mobile-btn-next">
@@ -90,7 +99,6 @@
               </button>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -151,6 +159,13 @@ const areMultiAnswersValid = computed(() => {
     (q) => multiAnswers.value[q] !== "" && multiAnswers.value[q] >= 0
   );
 });
+
+const validateInput = (event, questionId) => {
+  const value = event.target.value;
+  if (value < 0) {
+    multiAnswers.value[questionId] = 0;
+  }
+};
 
 const getQuestionText = (questionId) => {
   return questions.find((q) => q.id === questionId)?.text || "";
