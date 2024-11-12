@@ -74,30 +74,27 @@
             <!-- Multiple inputs for Q4-Q8 -->
             <div
               v-else-if="currentQuestion.id === 'Q4'"
-              class="multi-question-container"
+              class="mobile-questions-container"
             >
-              <div class="questions-stack">
-                <div
-                  v-for="q in ['Q4', 'Q5', 'Q6', 'Q7', 'Q8']"
-                  :key="q"
-                  class="question-item"
-                >
-                  <h2>{{ getQuestionText(q) }}</h2>
-                  <input
-                    v-model="multiAnswers[q]"
-                    class="form-control"
-                    type="number"
-                    min="0"
-                    :placeholder="'Votre réponse'"
-                  />
-                </div>
-              </div>
-              <button
-                @click="handleMultiAnswers"
-                class="btn-next"
-                :disabled="!areMultiAnswersValid"
+              <div
+                v-for="q in ['Q4', 'Q5', 'Q6', 'Q7', 'Q8']"
+                :key="q"
+                class="mobile-input-group"
               >
+                <h2>{{ getQuestionText(q) }}</h2>
+                <input
+                  v-model="multiAnswers[q]"
+                  class="mobile-input"
+                  type="number"
+                  min="0"
+                  :placeholder="'Votre réponse'"
+                />
+              </div>
+              <button @click="handleMultiAnswers" class="mobile-btn-next">
                 Terminer
+              </button>
+              <button @click="previousQuestion" class="mobile-btn-return">
+                Retour
               </button>
             </div>
           </div>
@@ -779,5 +776,59 @@ h2 {
   width: 200px;
   display: block;
   margin: 30px auto 0;
+}
+.mobile-questions-container {
+  width: 100%;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mobile-input-group {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.mobile-input-group h2 {
+  color: white;
+  font-size: 20px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.mobile-input {
+  width: 100%;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  text-align: center;
+  padding: 8px;
+}
+
+.mobile-btn-next {
+  background: green;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 16px;
+  margin: 10px 0;
+  width: 100%;
+}
+
+.mobile-btn-return {
+  background: #666;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 16px;
+  width: 100%;
 }
 </style>
