@@ -84,11 +84,25 @@
                 <input
                   v-model="multiAnswers[q]"
                   class="mobile-input"
-                  type="number"
-                  inputmode="numeric"
-                  pattern="[0-9]*"
-                  min="0"
-                  @input="validateInput($event, q)"
+                  type="tel"
+                  @input="
+                    multiAnswers[q] = $event.target.value.replace(/\D/g, '')
+                  "
+                  @keypress="
+                    (evt) =>
+                      [
+                        '0',
+                        '1',
+                        '2',
+                        '3',
+                        '4',
+                        '5',
+                        '6',
+                        '7',
+                        '8',
+                        '9',
+                      ].includes(evt.key) || evt.preventDefault()
+                  "
                 />
               </div>
               <button @click="handleMultiAnswers" class="mobile-btn-next">
@@ -152,20 +166,6 @@ const multiAnswers = ref({
 // Firestore refs
 const surveyCollectionRef = collection(db, "TER");
 const counterDocRef = doc(db, "counterTER", "surveyCounter");
-
-// Add these computed properties and methods
-const areMultiAnswersValid = computed(() => {
-  return ["Q4", "Q5", "Q6", "Q7", "Q8"].every(
-    (q) => multiAnswers.value[q] !== "" && multiAnswers.value[q] >= 0
-  );
-});
-
-const validateInput = (event, questionId) => {
-  const value = event.target.value;
-  if (value < 0) {
-    multiAnswers.value[questionId] = 0;
-  }
-};
 
 const getQuestionText = (questionId) => {
   return questions.find((q) => q.id === questionId)?.text || "";
