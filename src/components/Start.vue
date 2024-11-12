@@ -49,44 +49,57 @@
             </div>
           </div>
 
-          <!-- Commune Selector -->
-          <div v-if="currentQuestion.usesCommuneSelector">
-            <CommuneSelector
-              v-model="communeSelections[currentQuestion.id]"
-              v-model:postalCodePrefix="postalCodePrefixes[currentQuestion.id]"
-            />
-            <p>
-              Commune sélectionnée ou saisie:
-              {{ communeSelections[currentQuestion.id] }}
-            </p>
-            <button
-              @click="handleCommuneSelection"
-              class="btn-next"
-              :disabled="!communeSelections[currentQuestion.id]?.trim()"
-            >
-              {{ isLastQuestion ? "Terminer" : "Suivant" }}
-            </button>
-          </div>
-
           <!-- Free Text Questions -->
           <div v-if="currentQuestion.freeText">
-            <div class="input-container">
+            <!-- Single input for Q2 -->
+            <div
+              v-if="currentQuestion.id === 'Q2'"
+              class="train-input-container"
+            >
               <input
                 v-model="freeTextAnswer"
-                class="form-control"
+                class="form-control train-input"
                 type="text"
-                :placeholder="
-                  currentQuestion.freeTextPlaceholder || 'Votre réponse'
-                "
+                :placeholder="'Votre réponse'"
               />
+              <button
+                @click="handleFreeTextAnswer"
+                class="btn-next train-button"
+                :disabled="!freeTextAnswer.trim()"
+              >
+                Suivant
+              </button>
             </div>
-            <button
-              @click="handleFreeTextAnswer"
-              class="btn-next"
-              :disabled="!freeTextAnswer.trim()"
+
+            <!-- Multiple inputs for Q4-Q8 -->
+            <div
+              v-else-if="currentQuestion.id === 'Q4'"
+              class="multi-question-container"
             >
-              {{ isLastQuestion ? "Terminer" : "Suivant" }}
-            </button>
+              <div class="questions-stack">
+                <div
+                  v-for="q in ['Q4', 'Q5', 'Q6', 'Q7', 'Q8']"
+                  :key="q"
+                  class="question-item"
+                >
+                  <h2>{{ getQuestionText(q) }}</h2>
+                  <input
+                    v-model="multiAnswers[q]"
+                    class="form-control"
+                    type="number"
+                    min="0"
+                    :placeholder="'Votre réponse'"
+                  />
+                </div>
+              </div>
+              <button
+                @click="handleMultiAnswers"
+                class="btn-next"
+                :disabled="!areMultiAnswersValid"
+              >
+                Terminer
+              </button>
+            </div>
           </div>
 
           <!-- Back Button -->
@@ -121,11 +134,11 @@ import { db } from "../firebaseConfig";
 import { collection, getDocs, addDoc } from "firebase/firestore";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { questions } from "./surveyQuestions.js";
-import CommuneSelector from "./CommuneSelector.vue";
 import AdminDashboard from "./AdminDashboard.vue";
 
 // Refs
 const persistentQ1 = ref(null);
+const persistentQ2 = ref(null);
 const docCount = ref(0);
 const currentStep = ref("enqueteur");
 const startDate = ref("");
@@ -136,16 +149,35 @@ const freeTextAnswer = ref("");
 const questionPath = ref(["Q1"]);
 const isEnqueteurSaved = ref(false);
 const isSurveyComplete = ref(false);
-const selectedCommune = ref("");
-const stationInput = ref("");
-const filteredStations = ref([]);
-
-const communeSelections = ref({});
-const postalCodePrefixes = ref({});
-
+const multiAnswers = ref({
+  Q4: "",
+  Q5: "",
+  Q6: "",
+  Q7: "",
+  Q8: "",
+});
 // Firestore refs
 const surveyCollectionRef = collection(db, "TER");
 const counterDocRef = doc(db, "counterTER", "surveyCounter");
+
+// Add these computed properties and methods
+const areMultiAnswersValid = computed(() => {
+  return ["Q4", "Q5", "Q6", "Q7", "Q8"].every(
+    (q) => multiAnswers.value[q] !== "" && multiAnswers.value[q] >= 0
+  );
+});
+
+const getQuestionText = (questionId) => {
+  return questions.find((q) => q.id === questionId)?.text || "";
+};
+
+const handleMultiAnswers = () => {
+  // Save all answers
+  Object.entries(multiAnswers.value).forEach(([questionId, answer]) => {
+    answers.value[questionId] = answer;
+  });
+  finishSurvey();
+};
 
 const currentQuestion = computed(() => {
   if (
@@ -186,7 +218,7 @@ const currentQuestion = computed(() => {
 // Methods
 
 const startMessage = computed(() => {
-  return "Bonjour, Vous allez demarrer le questionnaire";
+  return "Bonjour, Vous allez démarrer le questionnaire";
 });
 
 const currentQuestionOptions = computed(() => {
@@ -198,10 +230,6 @@ const currentQuestionOptions = computed(() => {
   }
   return currentQuestion.value?.options || [];
 });
-
-const showFilteredStations = computed(
-  () => stationInput.value.length > 0 && filteredStations.value.length > 0
-);
 
 const canGoBack = computed(() => questionPath.value.length > 1);
 
@@ -222,21 +250,16 @@ const progress = computed(() => {
     : Math.min(Math.round((currentQuestionNumber / totalQuestions) * 100), 99);
 });
 
-const isValidCommuneSelection = computed(() => {
-  return (
-    selectedCommune.value.includes(" - ") || selectedCommune.value.trim() !== ""
-  );
-});
-
-// Methods
 const setEnqueteur = () => {
   if (enqueteur.value.trim() !== "") {
     currentStep.value = persistentQ1.value ? "start" : "survey";
-    currentQuestionIndex.value = persistentQ1.value ? 1 : 0;
+    currentQuestionIndex.value =
+      persistentQ1.value && persistentQ2.value ? 2 : 0;
     isEnqueteurSaved.value = true;
   }
 };
 
+// Update startSurvey in Start.vue
 const startSurvey = () => {
   startDate.value = new Date().toLocaleTimeString("fr-FR", {
     hour: "2-digit",
@@ -244,7 +267,8 @@ const startSurvey = () => {
     second: "2-digit",
   });
   currentStep.value = "survey";
-  currentQuestionIndex.value = 1; // Start from Q2 after the start message
+  // Change this line to check for persistentQ2
+  currentQuestionIndex.value = persistentQ1.value && persistentQ2.value ? 2 : 1;
   isSurveyComplete.value = false;
 };
 
@@ -267,42 +291,19 @@ const selectAnswer = (option) => {
   }
 };
 
+// Update handleFreeTextAnswer in Start.vue
 const handleFreeTextAnswer = () => {
   if (currentQuestion.value) {
     answers.value[currentQuestion.value.id] = freeTextAnswer.value;
+    if (currentQuestion.value.id === "Q2") {
+      persistentQ2.value = freeTextAnswer.value;
+    }
     if (currentQuestion.value.next === "end") {
       finishSurvey();
     } else {
       nextQuestion();
     }
     freeTextAnswer.value = ""; // Reset the free text answer
-  }
-};
-
-const handleCommuneSelection = () => {
-  if (currentQuestion.value.usesCommuneSelector) {
-    const questionId = currentQuestion.value.id;
-    const selectedValue = communeSelections.value[questionId];
-
-    if (selectedValue && selectedValue.trim() !== "") {
-      const parts = selectedValue.split(" - ");
-
-      if (parts.length === 2) {
-        // A commune was selected from the list
-        const [commune, codeInsee] = parts;
-        answers.value[`${questionId}_COMMUNE`] = commune;
-        answers.value[`${questionId}_CODE_INSEE`] = codeInsee;
-        answers.value[`${questionId}_COMMUNE_LIBRE`] = "";
-      } else {
-        // Free input was used
-        answers.value[`${questionId}_COMMUNE`] = "";
-        answers.value[`${questionId}_CODE_INSEE`] = "";
-        answers.value[`${questionId}_COMMUNE_LIBRE`] = selectedValue.trim();
-      }
-
-      nextQuestion();
-      communeSelections.value[questionId] = "";
-    }
   }
 };
 
@@ -349,7 +350,8 @@ const previousQuestion = () => {
     }
   }
 };
-// Update the finishSurvey function
+
+// Update finishSurvey function in Start.vue
 const finishSurvey = async () => {
   isSurveyComplete.value = true;
   const now = new Date();
@@ -385,22 +387,26 @@ const finishSurvey = async () => {
   } catch (error) {
     console.error("Error saving survey data:", error);
   }
-
-  await getDocCount();
-
-  // Add a short delay before resetting the survey
-  setTimeout(() => {
-    resetSurvey();
-  }, 2000); // 2 seconds delay
 };
 
-// Update the resetSurvey function
+// Update resetSurvey function
 const resetSurvey = () => {
+  isSurveyComplete.value = false; // First set this to false
   currentStep.value = "start";
   startDate.value = "";
-  answers.value = { Q1: persistentQ1.value };
-  currentQuestionIndex.value = 1; // Start from Q2
-  isSurveyComplete.value = false;
+  answers.value = {
+    Q1: persistentQ1.value,
+    Q2: persistentQ2.value,
+  };
+  // Reset multiAnswers
+  multiAnswers.value = {
+    Q4: "",
+    Q5: "",
+    Q6: "",
+    Q7: "",
+    Q8: "",
+  };
+  currentQuestionIndex.value = 2;
 };
 
 const getDocCount = async () => {
@@ -704,5 +710,74 @@ h2 {
 .precision-input h3 {
   font-size: 1.1em;
   margin-bottom: 10px;
+}
+
+/* Add to your existing styles */
+.multi-question-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.question-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.question-group h3 {
+  margin: 0;
+  font-size: 1.1em;
+}
+/* Update styles to match your screenshot */
+.multi-question-container {
+  width: 90%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.questions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.question-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 20px;
+}
+
+.question-item h2 {
+  color: white;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.form-control {
+  width: 100%;
+  height: 50px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 18px;
+  text-align: center;
+  padding: 10px;
+}
+
+.form-control::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-next {
+  width: 200px;
+  display: block;
+  margin: 30px auto 0;
 }
 </style>
