@@ -128,7 +128,11 @@
                   "
                 />
               </div>
-              <button @click="handleMultiAnswers" class="mobile-btn-next">
+              <button
+                @click="handleMultiAnswers"
+                class="mobile-btn-next"
+                :disabled="!areAllFieldsFilled"
+              >
                 Terminer
               </button>
               <button @click="previousQuestion" class="mobile-btn-return">
@@ -140,14 +144,18 @@
       </div>
 
       <div v-else-if="isSurveyComplete" class="survey-complete">
-    <h2>Merci pour votre réponse et bonne journée.</h2>
-    <button @click="resetSurvey" class="btn-next">
-      Nouveau questionnaire
-    </button>
-    <button @click="refreshPage" class="btn-next" style="background-color: #dc3545; margin-top: 10px;">
-      Nouvel enqueteur/axe/numero de train
-    </button>
-  </div>
+        <h2>Merci pour votre réponse et bonne journée.</h2>
+        <button @click="resetSurvey" class="btn-next">
+          Nouveau questionnaire
+        </button>
+        <button
+          @click="refreshPage"
+          class="btn-next"
+          style="background-color: #dc3545; margin-top: 10px"
+        >
+          Nouvel enqueteur/axe/numero de train
+        </button>
+      </div>
 
       <!-- Logo -->
       <img class="logo" src="../assets/Alycelogo.webp" alt="Logo Alyce" />
@@ -191,6 +199,12 @@ const multiAnswers = ref({
 // Firestore refs
 const surveyCollectionRef = collection(db, "TER");
 const counterDocRef = doc(db, "counterTER", "surveyCounter");
+
+const areAllFieldsFilled = computed(() => {
+  return ["Q4", "Q5", "Q6", "Q7", "Q8"].every(
+    (q) => multiAnswers.value[q].trim() !== ""
+  );
+});
 
 const getQuestionText = (questionId) => {
   return questions.find((q) => q.id === questionId)?.text || "";
@@ -285,7 +299,7 @@ const setEnqueteur = () => {
       // Initialize answers with persistent values
       answers.value = {
         Q1: persistentQ1.value,
-        Q2: persistentQ2.value
+        Q2: persistentQ2.value,
       };
     } else {
       // Otherwise start at Q1 or wherever appropriate
@@ -308,7 +322,7 @@ const startSurvey = () => {
   currentQuestionIndex.value = persistentQ1.value && persistentQ2.value ? 2 : 1;
   answers.value = {
     Q1: persistentQ1.value,
-    Q2: persistentQ2.value
+    Q2: persistentQ2.value,
   };
   isSurveyComplete.value = false;
 };
@@ -327,7 +341,7 @@ const selectAnswer = (option) => {
     } else if (currentQuestion.value.id === "Q2") {
       persistentQ2.value = option.id; // Store Q2 answer persistently
     }
-    
+
     if (option.next === "end") {
       finishSurvey();
     } else {
@@ -444,7 +458,7 @@ const resetSurvey = () => {
   // Initialize answers with persistent values
   answers.value = {
     Q1: persistentQ1.value,
-    Q2: persistentQ2.value
+    Q2: persistentQ2.value,
   };
   // Reset multiAnswers
   multiAnswers.value = {
